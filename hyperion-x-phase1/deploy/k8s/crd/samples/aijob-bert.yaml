@@ -1,0 +1,16 @@
+apiVersion: hyperion.ai/v1alpha1
+kind: AIJob
+metadata:
+  name: aijob-bert-small
+  namespace: default
+spec:
+  image: "pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime"
+  command: ["python", "-c", "import time; print('Hello from AIJob'); time.sleep(120)"]
+  resources:
+    cpu: "500m"
+    memory: "1Gi"
+    nvidiaGpu: 0
+  parallelism: 2
+  priority: normal
+  annotations:
+    hyperion.ai/scheduler: "hyperion-scheduler"

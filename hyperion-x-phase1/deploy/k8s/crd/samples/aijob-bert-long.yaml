@@ -1,0 +1,15 @@
+apiVersion: hyperion.ai/v1alpha1
+kind: AIJob
+metadata:
+  name: aijob-bert-long
+  namespace: default
+spec:
+  image: "pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime"
+  command: ["python", "-c", "import time; print('AIJob running'); time.sleep(3600)"]
+  resources:
+    cpu: "500m"
+    memory: "1Gi"
+  parallelism: 2
+  priority: normal
+  annotations:
+    hyperion.ai/scheduler: "hyperion-scheduler"

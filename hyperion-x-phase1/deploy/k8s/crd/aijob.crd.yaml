@@ -1,0 +1,77 @@
+# deploy/k8s/crd/aijob.crd.yaml
+
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: aijobs.hyperion.ai
+spec:
+  group: hyperion.ai
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      # This enables the /status subresource, which is best practice
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                image: { type: string }
+                command:
+                  type: array
+                  items: { type: string }
+                resources:
+                  type: object
+                  properties:
+                    cpu: { type: string }
+                    memory: { type: string }
+                    nvidiaGpu: { type: integer, minimum: 0 }
+                parallelism:
+                  type: integer
+                  minimum: 1
+                priority:
+                  type: string
+                  enum: ["low", "normal", "high"]
+                annotations:
+                  type: object
+                  additionalProperties: { type: string }
+            # Define the schema for the status subresource
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: "The current phase of the AIJob (e.g., Pending, Running, Succeeded, Failed)."
+                runningPods:
+                  type: integer
+                  description: "The number of pods currently in the Running phase."
+                succeededPods:
+                  type: integer
+                  description: "The number of pods that have successfully completed."
+      # These columns make `kubectl get aijob` much more informative
+      additionalPrinterColumns:
+        - name: Status
+          type: string
+          jsonPath: ".status.phase"
+        - name: Desired
+          type: integer
+          jsonPath: ".spec.parallelism"
+        - name: Running
+          type: integer
+          jsonPath: ".status.runningPods"
+        - name: Succeeded
+          type: integer
+          jsonPath: ".status.succeededPods"
+        - name: Age
+          type: date
+          jsonPath: ".metadata.creationTimestamp"
+  scope: Namespaced
+  names:
+    plural: aijobs
+    singular: aijob
+    kind: AIJob
+    shortNames: ["aij"]

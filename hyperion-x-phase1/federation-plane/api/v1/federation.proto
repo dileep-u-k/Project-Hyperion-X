@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package federation.v1;
+
+option go_package = "github.com/dileep-u-k/hyperion-x-phase1/federation-plane/api/v1";
+
+// The Federation service is the main entrypoint for global scheduling.
+service Federation {
+  // ScheduleAIJob makes a global placement decision and deploys an AIJob.
+  rpc ScheduleAIJob(ScheduleAIJobRequest) returns (ScheduleAIJobResponse);
+  
+  // ReportStatus is a bi-directional stream for clusters to report health
+  // and for the Federation Plane to send commands.
+  rpc ReportStatus(stream ClusterStatusReport) returns (stream Command);
+}
+
+// Represents the AIJob spec from Phase 1.
+// In a real project, you'd import this from a shared types proto.
+message AIJobSpec {
+  string image = 1;
+  repeated string command = 2;
+  map<string, string> resources = 3;
+  int32 parallelism = 4;
+}
+
+message ScheduleAIJobRequest {
+  // The unique name for this job instance.
+  string job_name = 1;
+  // The namespace to deploy the job into.
+  string namespace = 2;
+  // The full AIJob spec.
+  AIJobSpec spec = 3;
+
+  // PlacementPolicy defines the user's high-level goal for placement.
+  enum PlacementPolicy {
+    UNSPECIFIED = 0;
+    CHEAPEST = 1;     // Prioritize the lowest spot instance cost.
+    FASTEST = 2;      // Prioritize the lowest inter-region network latency.
+    LOW_CARBON = 3;   // Prioritize the region with the greenest energy grid.
+  }
+  PlacementPolicy policy = 4;
+
+  // The location of the primary dataset (e.g., "s3://my-data-bucket").
+  string data_location = 5;
+}
+
+message ScheduleAIJobResponse {
+  string job_id = 1;
+  // The ID of the HyperionCluster where the job was placed.
+  string cluster_id = 2;
+  string message = 3;
+}
+
+// ClusterStatusReport is sent periodically from each managed cluster to the Federation Plane.
+message ClusterStatusReport {
+  string cluster_id = 1;
+  // Real-time telemetry from the cluster's Hyperion Agents.
+  double average_cpu_utilization_pct = 2;
+  double average_mem_utilization_pct = 3;
+  int32 total_gpu_count = 4;
+  int32 allocatable_gpu_count = 5;
+}
+
+// Command is sent from the Federation Plane to managed clusters.
+// (For future use, e.g., to command a cluster to scale up or down).
+message Command {
+  string command_id = 1;
+  string action = 2;
+  map<string, string> parameters = 3;
+}

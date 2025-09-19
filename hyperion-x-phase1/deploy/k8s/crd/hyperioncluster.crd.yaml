@@ -1,0 +1,74 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: hyperionclusters.hyperion.ai
+spec:
+  group: hyperion.ai
+  scope: Cluster
+  names:
+    plural: hyperionclusters
+    singular: hyperioncluster
+    kind: HyperionCluster
+    shortNames: ["hc"]
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: ["provider", "region", "apiEndpoint", "kubeconfigSecretRef"]
+              properties:
+                provider:
+                  type: string
+                  # Officially adding Azure to the list of supported providers.
+                  enum: ["aws", "gcp", "azure", "on-prem"]
+                region:
+                  type: string
+                apiEndpoint:
+                  type: string
+                  description: "The public API endpoint of the remote Kubernetes cluster."
+                kubeconfigSecretRef:
+                  type: object
+                  required: ["name", "namespace"]
+                  properties:
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: "Current status of the cluster (e.g., Connecting, Online, Offline)."
+                lastHeartbeatTime:
+                  type: string
+                  format: date-time
+                allocatable:
+                  type: object
+                  properties:
+                    cpu:
+                      type: string
+                    memory:
+                      type: string
+                    gpus:
+                      type: integer
+      additionalPrinterColumns:
+        - name: Status
+          type: string
+          jsonPath: ".status.phase"
+        - name: Provider
+          type: string
+          jsonPath: ".spec.provider"
+        - name: Region
+          type: string
+          jsonPath: ".spec.region"
+        - name: Age
+          type: date
+          jsonPath: ".metadata.creationTimestamp"

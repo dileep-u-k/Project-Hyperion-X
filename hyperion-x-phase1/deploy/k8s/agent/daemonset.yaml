@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hyperion-agent
+  namespace: hyperion-system
+spec:
+  selector:
+    matchLabels:
+      app: hyperion-agent
+  template:
+    metadata:
+      labels:
+        app: hyperion-agent
+    spec:
+      serviceAccountName: default
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: agent
+          image: hyperion/agent:phase1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 9090
+              name: http
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly: true
+          env:
+            - name: RUST_LOG
+              value: info
+            - name: MY_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+            type: Directory

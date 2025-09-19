@@ -1,0 +1,33 @@
+# ---------------------------
+# Build stage (Go 1.24+)
+# ---------------------------
+FROM golang:1.24 AS build
+
+WORKDIR /src
+
+# Download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the Hyperion Scheduler binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/hyperion-scheduler ./cmd/scheduler
+
+# ---------------------------
+# Runtime stage (Distroless)
+# ---------------------------
+FROM gcr.io/distroless/base-debian12:latest
+
+# Copy the compiled binary
+COPY --from=build /out/hyperion-scheduler /bin/hyperion-scheduler
+
+# Expose ports for Scheduler HTTP API and Prometheus metrics
+EXPOSE 8080 9090
+
+# Run as non-root
+USER 65532:65532
+
+# Entry point
+ENTRYPOINT ["/bin/hyperion-scheduler"]

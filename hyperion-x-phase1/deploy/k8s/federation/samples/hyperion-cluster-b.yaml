@@ -1,0 +1,11 @@
+apiVersion: hyperion.ai/v1alpha1
+kind: HyperionCluster
+metadata:
+  name: eks-cluster-b
+spec:
+  provider: aws
+  region: us-east-1
+  apiEndpoint: "placeholder"
+  kubeconfigSecretRef:
+    name: kubeconfig-b
+    namespace: hyperion-system

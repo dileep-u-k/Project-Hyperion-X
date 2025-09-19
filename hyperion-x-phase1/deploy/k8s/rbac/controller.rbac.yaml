@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hyperion-controller
+  namespace: hyperion-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: hyperion-controller
+rules:
+  - apiGroups: ["hyperion.ai"]
+    # Add "aijobs/status" to resources and "update" to verbs
+    resources: ["aijobs", "aijobs/status"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "create"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: hyperion-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: hyperion-controller
+subjects:
+  - kind: ServiceAccount
+    name: hyperion-controller
+    namespace: hyperion-system
